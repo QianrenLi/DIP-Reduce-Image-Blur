@@ -7,49 +7,76 @@ import cv2
 import matplotlib.pyplot as plt
 
 
-def convolution(affine_matrix, input_image):
-    size = len(affine_matrix)
-    length = size // 2
-    n = len(input_image)
-    m = len(input_image[0])
-    temp_image = np.pad(input_image,((n,m),(n,m)),'constant',constant_values = (0,0))
-
-    return_image = np.zeros(shape=temp_image.shape)
-    for i in range(n+length, 2*n):
-        for j in range(m+length, 2*m):
-            test = np.array([[i],[j],[temp_image[i][j]]])
+def rotation(image, theta):
+    '''
+    not consider theta < 0 or theta > 45 (that is k < -45)
+    :param image:
+    :param theta:
+    :return:
+    '''
+    # return_image = np.zeros(shape=image.shape)
+    theta = theta % (2 * np.pi)
+    cosine = np.cos(theta)
+    sine = np.sin(theta)
+    affine_matrix = np.array([[cosine,sine,0],[-sine,cosine,0],[0,0,1]])
+    a = len(image)
+    b = len(image[0])
+    pad_length = a*cosine
+    return_image = np.zeros(shape=(int(a*cosine + b*sine),int(a*sine + b*cosine)))
+    for i in range(a):
+        for j in range(b):
+            test = np.array([[i],[j],[image[i][j]]])
             index = np.matmul(affine_matrix,test)
-            a = int(index[0][0])
-            b = int(index[1][0])
-            # temp = temp_image[i - length:i + length + 1, j - length: j + length + 1]
-            # print(a.dtype)
             try:
-                return_image[a][b] = index[2][0]
+                return_image[int(index[0][0])][int(index[1][0] + a * sine)] = index[2]
             except IndexError:
                 print(a)
                 print(b)
-    return return_image
-
-
-def rotation(image, theta):
-    # return_image = np.zeros(shape=image.shape)
-    affine_matrix = np.array([[np.cos(theta),np.sin(theta),0],[-np.sin(theta),np.cos(theta),0],[0,0,1]])
-    return_image = convolution(affine_matrix, image)
+    # return_image = convolution(affine_matrix, image)
 
     return return_image
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+def derivative(image,k):
+    '''
+
+    :param image:
+    :param k: relative to the positive direction
+    :return:
+    '''
+    # filter = np.array([[-1,1-np.tan(k)],[0,np.tan(k)]])
+    filter = np.array([[np.tan(k),1-np.tan(k)],[0,-1]])
+    length = 1
+    temp_image = np.pad(image,((length,length),(length,length)),'constant',constant_values = (0,0))
+    intensity_image = np.zeros(shape = temp_image.shape)
+    for i in range(length,len(temp_image)):
+        for j in range(length,len(temp_image[0])):
+            value = np.sum(np.multiply(filter,temp_image[i - length:i + length , j - length:j + length]))
+            intensity_image[i][j] = value
+
+    return intensity_image
+
+
+def findDirection(image):
+    intensity_list = np.zeros(45)
+    for k in range(45):
+        intensity_image = derivative(image, k/180 * (2*np.pi))
+        # plt.imshow(intensity_image, cmap='gray')
+        # plt.show()
+        intensity_value = np.sum(np.sum(np.abs(intensity_image))) # slightly different from origin, and a bit of slow
+        intensity_list[k] = intensity_value
+    ind = np.argmax(intensity_list)
+    return intensity_list
 
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    path = 'test.tiff'
+    path = 'test2.tiff'
     image = cv2.imread(path, 0)
-    output_image = rotation(image, 0.5)
+    # output_image = rotation(image, np.pi/2)
     # print(output_image)
-    plt.imshow(output_image, cmap='gray')
-    plt.show()
+    print(findDirection(image))
+    # output_image = derivative(image,0)
+    # plt.imshow(output_image, cmap='gray')
+    # plt.show()
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/

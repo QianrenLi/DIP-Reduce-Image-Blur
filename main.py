@@ -45,7 +45,7 @@ def derivative(image,k):
     :return:
     '''
     # filter = np.array([[-1,1-np.tan(k)],[0,np.tan(k)]])
-    filter = np.array([[np.tan(k),1-np.tan(k)],[0,-1]])
+    filter = np.array([[-1,1-np.tan(k)],[0,np.tan(k)]])
     length = 1
     temp_image = np.pad(image,((length,length),(length,length)),'constant',constant_values = (0,0))
     intensity_image = np.zeros(shape = temp_image.shape)
@@ -60,10 +60,10 @@ def derivative(image,k):
 def findDirection(image):
     intensity_list = np.zeros(45)
     for k in range(45):
-        intensity_image = derivative(image, k/180 * (2*np.pi))
+        intensity_image = derivative(image, - k/180 * (np.pi))
         # plt.imshow(intensity_image, cmap='gray')
         # plt.show()
-        intensity_value = np.sum(np.sum(np.abs(intensity_image))) # slightly different from origin, and a bit of slow
+        intensity_value = np.abs(np.sum(np.sum(intensity_image)))# slightly different from origin, and a bit of slow
         intensity_list[k] = intensity_value
     ind = np.argmax(intensity_list)
     return intensity_list

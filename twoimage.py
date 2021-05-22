@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import cv2 
-from skimage import data,color
+from skimage import data
 img=(data.camera())
 an1 = 45+   45
 an2 = 45-   45

@@ -3,8 +3,8 @@ import numpy as np
 import cv2 
 from skimage import data,color
 img=(data.camera())
-a1 = 45+   45
-a2 = 45-   45
+an1 = 45+   45
+an2 = 45-   45
 m1 = np.array ([0.2,0.2,0.2,0.2,0.2])
 def Conv(image,mi,angle):
     K = mi.size
@@ -77,15 +77,42 @@ def Error2(image1,image2,K1,K2,a1,a2):
     for i in range(H):
             for j in range(W): 
                 for k in range(K1):
-                    out[k] = out[k] + (image1[i+k*c2][j+k*s2]-image1[i+k*c1][j+k*s1])
+                    out[k] = out[k] +  (image1[i+k*c2][j+k*s2]-image1[i+k*c1][j+k*s1])
     return out
-#def Direct(image,amin,amax):
-    
-#    return
+def Amp(image1,image2,a1,a2):
+    out1 = out2 = -1
+    for k1 in range(14,30):
+        for k2 in range(14,30):
+            O1 = np.zeros(k2)
+            O2 = np.zeros(k1)
+            O1 = Error1(image1,image2,k1,k2,a1,a2)
+            O2 = Error2(image1,image2,k1,k2,a1,a2)
+            for i in range(k2):
+                if O1[i] == 0:
+                    out2 = k2
+            for i in range(k1):
+                if O2[i] == 0:
+                    out1 = k1
+    return out1,out2
+def Direct(image1,image2,m1,m2,amin=-90,amax=90):
+    Fuck = 50000
+    for a1 in range(amin,amax):
+        for a2 in range(amin,amax):
+            img1 = Conv(image1,m2,a2)
+            img2 = Conv(image2,m1,a1)
+            H,W = img1.shape
+            for i in range(H):
+                for j in range(W):
+                    output = img1[i][j]-img2[i][j]
+                    output = output*output
+                    if output < Fuck:
+                        Fuck = output
+                        o1=a1
+                        o2=a2
+    return o1,o2
 
 
 
-#print(dst.shape)
 dst1 = Q(img,50,45)
 dst2 = Q(img,50,45)
 fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(8,8))
